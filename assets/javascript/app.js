@@ -56,6 +56,21 @@ database.ref('/trainScheduler').on("child_added", function(childSnapshot) {
     var nextTrain = moment().add(tMinutesTillTrain, "minutes");
     console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
 
+    // Jake's fixes (necessary to distinguish between if first train time is after or before current time, respectively)
+    if ((moment().format("X")) < (moment(childSnapshot.val().firstTrainTimeDb, 'hh:mm').format("X"))) { // this is if current time is less than first train time
+        // tMinutesTillTrain is difference from the first train time minus the current time
+        tMinutesTillTrain = moment(childSnapshot.val().firstTrainTimeDb, 'hh:mm').diff(moment(), "minutes");
+        // nextTrain is of course the first train time since the current time is less
+        nextTrain = moment(childSnapshot.val().firstTrainTimeDb, 'hh:mm').format("hh:mm a")
+
+    } else { // this is if first train time is less than current time
+        // tMinutesTillTrain is frequency - (difference between the current time and the first train time and then its remainder)
+        tMinutesTillTrain = childSnapshot.val().frequencyDb - ((moment().diff(moment(childSnapshot.val().firstTrainTimeDb, 'hh:mm'), "minutes")) % childSnapshot.val().frequencyDb);
+        // nextTrain is the current time + tMinutesTillTrain
+        nextTrain = moment().add(tMinutesTillTrain, 'minutes').format("hh:mm a");
+    };
+
+
 	$('#table').append(`
 
 		<tr>
